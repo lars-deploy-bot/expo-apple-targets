@@ -36,6 +36,13 @@ export type XcodeSettings = {
 
   exportJs?: boolean;
 
+  /**
+   * When set, the target's `INFOPLIST_FILE` is overridden to
+   * `<productName>/Info.plist` so the source plist stays untouched and the
+   * merged copy under `ios/<productName>/Info.plist` is used instead.
+   */
+  hasGeneratedInfoPlist?: boolean;
+
   /** File path to the extension config file. */
   configPath: string;
 
@@ -901,6 +908,11 @@ export function createConfigurationListForType(
     project,
     props,
   );
+  if (props.hasGeneratedInfoPlist) {
+    const overridden = `${props.productName}/Info.plist`;
+    debug.INFOPLIST_FILE = overridden;
+    release.INFOPLIST_FILE = overridden;
+  }
   return XCConfigurationList.create(project, {
     buildConfigurations: [
       XCBuildConfiguration.create(project, {

@@ -21,7 +21,6 @@ import {
   SHOULD_USE_APP_GROUPS_BY_DEFAULT,
 } from "./target";
 import { withEASTargets } from "./with-eas-credentials";
-import { withXcodeProjectBeta } from "./with-bacons-xcode";
 import { withXcodeChanges } from "./with-xcode-changes";
 import {
   getSanitizedBundleIdentifier,
@@ -358,11 +357,14 @@ const withWidget: ConfigPlugin<Props> = (config, props) => {
       props.exportJs ??
       // Assume App Clips are used for React Native.
       props.type === "clip",
+    hasGeneratedInfoPlist: !!props.infoPlist,
   });
 
   // When the user provides `infoPlist`, write a merged copy into the prebuild
-  // `ios/` folder and point INFOPLIST_FILE at it, so the source Info.plist in
-  // the repo stays untouched.
+  // `ios/` folder. The matching `INFOPLIST_FILE` override is set inside
+  // `createConfigurationListForType` via the `hasGeneratedInfoPlist` flag
+  // passed through `withXcodeChanges` above, so the source Info.plist in the
+  // repo stays untouched.
   if (props.infoPlist) {
     const generatedInfoPlistDir = path.join(
       config._internal!.projectRoot,
@@ -392,19 +394,6 @@ const withWidget: ConfigPlugin<Props> = (config, props) => {
         return modConfig;
       },
     ]);
-
-    withXcodeProjectBeta(config, async (modConfig) => {
-      const target = modConfig.modResults.rootObject.props.targets.find(
-        (t) => t.props.productName === productName,
-      );
-      if (target) {
-        target.setBuildSetting(
-          "INFOPLIST_FILE",
-          `${productName}/Info.plist`,
-        );
-      }
-      return modConfig;
-    });
   }
 
   config = withEASTargets(config, {
